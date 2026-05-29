@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A battery-friendly hydration reminder for the **M5StickC Plus** (ESP32-PICO + AXP192). Wakes from deep sleep at a configurable interval, runs a 3-minute alert with buzzer + LED + animated water glass, and goes straight back to deep sleep when you press A (drank it) or 3 minutes elapse.
+A battery-friendly hydration reminder for the **M5StickC Plus** (ESP32-PICO + AXP192). Wakes from deep sleep at a configurable interval, runs a 3-minute alert with buzzer + LED + animated water glass, and goes straight back to deep sleep when you press A (drank it), press B (skip this one), or 3 minutes elapse.
 
 Between reminders the device is fully asleep — pressing **A** (front) or **Power** (left side) wakes it into an interactive UI with Home / Stats / Battery pages plus a settings menu. Power-button presses also put the device back to sleep on demand. Flip face-down to nap the screen; flip face-up to wake it.
 
@@ -88,10 +88,13 @@ The menu is split into two pages — **REMINDER** (when/how the reminder fires) 
 | Action                  | Effect                                                                              |
 | ----------------------- | ----------------------------------------------------------------------------------- |
 | **A**                   | Acknowledge ("Drank it!") → increment counter → go back to deep sleep               |
+| **B**                   | Skip / pass — no glass counted, "skipped" screen → back to deep sleep               |
 | **Power (left, short)** | Silently dismiss — no glass counted, straight back to deep sleep                    |
 | Wait 3 min              | Silent timeout → "snoozed" → back to deep sleep                                     |
 | (Face-down)             | Ignored — the alert is meant to nag you; laying the device down can't silence it    |
 
+> **B (skip) vs. Power (dismiss):** both pass on the drink without counting a glass and both let the schedule advance normally — the difference is feedback. **B** gives an explicit acknowledgement (a short "bo-boop" blip and a *skipped* screen) for when you consciously decide not to drink right now; **Power** is the silent "shut up and let me work" escape. Neither touches the daily counter or the "last drink" timestamp.
+>
 > The next scheduled wake is computed from your interval setting and quiet-hour window — if the next wake would land inside quiet hours, the device sleeps until quiet hours end instead.
 
 ---
@@ -138,8 +141,8 @@ src/
   main.cpp        boot flow + interactive loop (page cycling, menu, face-down nap, power-button sleep, idle deep-sleep)
   settings.h/cpp  WaterSettings struct, NVS persistence, interval choices
   power.h/cpp     wake-reason detection, RTC math, AXP PEK IRQ setup, deepSleepFor / deepSleepUntilButton
-  ui.h/cpp        sprite-rendered pages, settings menu, animated glass, ack/timeout screens
-  reminder.h/cpp  blocking 3-minute alert state machine (buzz, LED, animation, A→ack, Power→dismiss)
+  ui.h/cpp        sprite-rendered pages, settings menu, animated glass, ack/skipped/timeout screens
+  reminder.h/cpp  blocking 3-minute alert state machine (buzz, LED, animation, A→ack, B→skip, Power→dismiss)
 platformio.ini    board = m5stick-c, lib = m5stack/M5StickCPlus
 ```
 

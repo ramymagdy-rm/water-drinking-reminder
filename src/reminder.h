@@ -7,6 +7,7 @@
 
 enum ReminderResult {
   REM_ACK,        // user pressed A — counted as a glass drunk
+  REM_PASSED,     // user pressed B — deliberately skipped this drink
   REM_TIMEOUT,    // 3-minute timer elapsed, no acknowledgement
   REM_DISMISSED   // user hit the power button to silence the alert
 };

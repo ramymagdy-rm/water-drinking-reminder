@@ -113,6 +113,14 @@ static const ToneStep ACK_FANFARE[] = {
   { 1047, 380 },   // C6  "raaat" — held
 };
 
+// "Bo-boop" skip blip — a short descending two-note cue when the user passes
+// on the drink. Deliberately understated next to the ACK fanfare so the
+// reward stays reserved for actually drinking.
+static const ToneStep PASS_BLIP[] = {
+  {  784, 90 },    // G5
+  {  523, 130 },   // C5  (down)
+};
+
 static void playSequence(const ToneStep* seq, uint8_t n) {
   applyVolume();
   for (uint8_t i = 0; i < n; i++) {
@@ -197,6 +205,15 @@ ReminderResult runReminder() {
       // note. Blocking ~700 ms is fine; we're exiting the reminder anyway.
       playSequence(ACK_FANFARE, sizeof(ACK_FANFARE) / sizeof(ToneStep));
       return REM_ACK;
+    }
+    if (M5.BtnB.wasPressed()) {
+      // Deliberate skip — user acknowledged the alert but isn't drinking now.
+      // No glass counted; the schedule still advances so we nag again later.
+      M5.Beep.mute();
+      playing = false;
+      ledOn(false);
+      playSequence(PASS_BLIP, sizeof(PASS_BLIP) / sizeof(ToneStep));
+      return REM_PASSED;
     }
     if (powerButtonPressed() == 0x02) {
       M5.Beep.mute();

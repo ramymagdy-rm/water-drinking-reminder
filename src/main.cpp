@@ -213,6 +213,9 @@ void setup() {
       onAckDrank();
       uiDrawAck();
       delay(1500);
+    } else if (r == REM_PASSED) {
+      uiDrawPassed();
+      delay(800);
     } else if (r == REM_TIMEOUT) {
       uiDrawTimeout();
       delay(800);
@@ -282,6 +285,9 @@ void loop() {
         onAckDrank();
         uiDrawAck(); uiPush();
         delay(1500);
+      } else if (r == REM_PASSED) {
+        uiDrawPassed(); uiPush();
+        delay(800);
       } else if (r == REM_TIMEOUT) {
         uiDrawTimeout(); uiPush();
         delay(800);

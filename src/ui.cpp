@@ -453,10 +453,12 @@ void uiDrawReminder(uint32_t elapsedMs, uint32_t totalMs, bool pulseActive) {
   spr.setTextColor(rs < 30 ? RED_C : DIM, BG);
   spr.drawString(tbuf, CX, 184);
 
-  // Action hint
+  // Action hints — A confirms the drink, B passes (skip without counting).
   spr.setTextSize(1);
   spr.setTextColor(GREEN_C, BG);
-  spr.drawString("A: drank it!", CX, 214);
+  spr.drawString("A: drank it!", CX, 210);
+  spr.setTextColor(DIM, BG);
+  spr.drawString("B: skip", CX, 224);
   spr.setTextDatum(TL_DATUM);
 }
 
@@ -482,6 +484,19 @@ void uiDrawAck() {
   char buf[24];
   snprintf(buf, sizeof(buf), "%u glasses today", (unsigned)settings().glassesToday);
   spr.drawString(buf, CX, H / 2 + 50);
+  spr.setTextDatum(TL_DATUM);
+  uiPush();
+}
+
+void uiDrawPassed() {
+  spr.fillSprite(BG);
+  spr.setTextDatum(MC_DATUM);
+  spr.setTextSize(2);
+  spr.setTextColor(WATER_LT, BG);
+  spr.drawString("skipped", CX, H / 2 - 12);
+  spr.setTextSize(1);
+  spr.setTextColor(DIM, BG);
+  spr.drawString("maybe next time", CX, H / 2 + 14);
   spr.setTextDatum(TL_DATUM);
   uiPush();
 }

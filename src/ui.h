@@ -62,6 +62,7 @@ void uiDrawMenu(uint8_t page, uint8_t selected);
 void uiDrawReminder(uint32_t elapsedMs, uint32_t totalMs, bool pulseActive);
 
 void uiDrawAck();             // post-acknowledge "great!" splash
+void uiDrawPassed();          // shown briefly after the user presses B to skip
 void uiDrawTimeout();         // shown briefly after 3-min timeout before sleep
 void uiPush();                // sprite → LCD; call once per frame
 
