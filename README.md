@@ -16,7 +16,8 @@ Between reminders the device is fully asleep — pressing **A** (front) or **Pow
 - **Daily glass counter** — counts A-presses, rolls over at midnight (RTC date change).
 - **"Last drink X min ago"** on the Home page.
 - **Battery page** — percentage, voltage, current, charge state.
-- **Set the RTC** from the device itself (hour and minute items in the settings menu).
+- **NTP time sync on every wake** — if WiFi credentials are configured in `src/secrets.h`, every wake-up (timer, button, power-on, pick-up) joins WiFi, fetches NTP time (EET/EEST with automatic DST), writes it into the BM8563 RTC and shuts the radio back down. On timer wakes the WiFi association overlaps the reminder alert so the buzz is never delayed; the whole attempt is capped at 10 s. With an empty SSID the feature compiles out to a no-op.
+- **Set the RTC manually** from the device itself (hour and minute items in the settings menu) — the fallback when WiFi isn't configured or reachable.
 - **Deep sleep** between reminders and after 30 s of idle in interactive mode — sips current from the AXP192 battery rail. Idle-deep-sleep can be disabled via the `auto-sleep` setting if you want the device to stay on (e.g. on the desk while charging); the reminder still fires in-place when its scheduled minute arrives.
 - **Power button toggles deep sleep** — short-press the left-side Power (PEK) button to sleep on demand; press it again to wake even if the device is already in deep sleep.
 - **Face-down nap** — flip the device face-down and the screen dims and animations pause; flip it back over and it wakes instantly. Skipped during the reminder alert so you can't silence a nag by laying it down.
@@ -123,10 +124,11 @@ The `platformio.ini` is pinned to `board = m5stick-c` (the M5StickC Plus reuses 
 
 ## First-boot setup
 
+0. *(Recommended)* Copy `src/secrets.h.example` to `src/secrets.h` (gitignored), fill in your WiFi SSID/password and build — the clock then sets itself over NTP within a few seconds of every wake and steps 3–4 become unnecessary.
 1. Power on the device with the **power button** (left side, short press).
 2. The splash screen shows briefly, then drops to the Home page.
-3. Press A to cycle to the Stats page — the clock reads `00:00` because the RTC hasn't been set yet.
-4. **Hold A** to open the settings menu. Select `set hour` and press B until the hour is correct, then `set min` and press B to dial in the minutes. The first time you change the clock the date is bumped to 2024-01-01 so quiet hours start working.
+3. *(WiFi-less fallback)* Press A to cycle to the Stats page — the clock reads `00:00` because the RTC hasn't been set yet.
+4. *(WiFi-less fallback)* **Hold A** to open the settings menu. Select `set hour` and press B until the hour is correct, then `set min` and press B to dial in the minutes. The first time you change the clock the date is bumped to 2024-01-01 so quiet hours start working.
 5. Optionally set `interval`, `quiet from`, `quiet to`, `bright`, `sound`, `led`.
 6. **Hold A** to save and exit, or just leave it — it auto-saves and deep-sleeps after 30 s.
 
@@ -143,6 +145,8 @@ src/
   power.h/cpp     wake-reason detection, RTC math, AXP PEK IRQ setup, deepSleepFor / deepSleepUntilButton
   ui.h/cpp        sprite-rendered pages, settings menu, animated glass, ack/skipped/timeout screens
   reminder.h/cpp  blocking 3-minute alert state machine (buzz, LED, animation, A→ack, B→skip, Power→dismiss)
+  timesync.h/cpp  per-wake WiFi + NTP sync state machine → writes BM8563 RTC (EET/EEST, 10 s budget)
+  secrets.h       WiFi credentials (gitignored — copy from secrets.h.example)
 platformio.ini    board = m5stick-c, lib = m5stack/M5StickCPlus
 ```
 

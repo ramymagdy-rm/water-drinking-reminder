@@ -7,6 +7,7 @@
 #include "power.h"
 #include "ui.h"
 #include "reminder.h"
+#include "timesync.h"
 
 static void applyVolume() { M5.Beep.setVolume(settings().pulseVolume); }
 
@@ -197,12 +198,16 @@ void setup() {
   WakeReason wr = wakeReason();
 
   if (wr == WAKE_TIMER) {
+    // Start the per-wake NTP sync now — WiFi associates in the background
+    // while the reminder beeps, so the alert is never delayed by the radio.
+    timeSyncBegin();
     // Scheduled reminder. Honor quiet hours as a safety check — the scheduler
     // tries to avoid landing in quiet, but if quiet hours were edited after
     // the last sleep we might wake mid-quiet.
     if (rtcIsValid()) {
       RTC_TimeTypeDef tm; M5.Rtc.GetTime(&tm);
       if (inQuietHours(tm.Hours)) {
+        timeSyncFinish();   // correct the clock before computing the long sleep
         deepSleepFor(secondsUntilNextReminder());
         return;
       }
@@ -221,12 +226,15 @@ void setup() {
       delay(800);
     }
     // REM_DISMISSED: silent — power button means "shut up and let me work".
+    timeSyncFinish();   // clock corrected before the schedule is recomputed
     scheduleNextReminder();           // advance schedule = now + interval
     deepSleepFor(secondsUntilNextReminder());
     return;
   }
 
-  // POWER_ON or BUTTON → interactive mode.
+  // POWER_ON or BUTTON → interactive mode. NTP sync runs non-blocking in the
+  // background of loop() so the UI comes up instantly.
+  timeSyncBegin();
   rolloverDailyGlasses();
   enterInteractiveMode();
   if (wr == WAKE_POWER_ON) {
@@ -242,6 +250,13 @@ void loop() {
   M5.update();
   M5.Beep.update();
   uint32_t now = millis();
+
+  // ─── background NTP sync (started in setup). When it lands, the RTC just
+  // moved — recompute the anchored schedule against the corrected clock.
+  if (timeSyncPoll() == TS_DONE) {
+    rolloverDailyGlasses();     // sync may have crossed midnight / fixed the date
+    scheduleNextReminder();
+  }
 
   // ─── face-down nap: dim screen and pause UI when face-down, undim on flip
   // up. Hysteresis: need 15 consecutive face-down frames to enter the nap,
