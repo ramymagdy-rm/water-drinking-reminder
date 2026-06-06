@@ -15,26 +15,26 @@ enum MenuPage { MP_REMINDER = 0, MP_DEVICE, MP_COUNT };
 // Catalog of menu items. The order here doesn't matter — pages reference
 // items by ID via PAGE_ITEMS in ui.cpp.
 enum MenuItem {
-  MI_INTERVAL = 0,
-  MI_ANCHOR_HOUR,
-  MI_ANCHOR_MIN,
-  MI_QUIET_START,
-  MI_QUIET_END,
-  MI_PULSE_RHYTHM,
-  MI_PULSE_LEN,
-  MI_VOLUME,
-  MI_PULSE_PREVIEW,
-  MI_BRIGHTNESS,
-  MI_SOUND,
-  MI_LED,
-  MI_AUTO_SLEEP,
-  MI_WAKE_MOTION,
-  MI_SET_HOUR,
-  MI_SET_MINUTE,
-  MI_SHUTDOWN,
-  MI_NEXT_PAGE,
-  MI_EXIT,
-  MI_ITEM_COUNT
+    MI_INTERVAL = 0,
+    MI_ANCHOR_HOUR,
+    MI_ANCHOR_MIN,
+    MI_QUIET_START,
+    MI_QUIET_END,
+    MI_PULSE_RHYTHM,
+    MI_PULSE_LEN,
+    MI_VOLUME,
+    MI_PULSE_PREVIEW,
+    MI_BRIGHTNESS,
+    MI_SOUND,
+    MI_LED,
+    MI_AUTO_SLEEP,
+    MI_WAKE_MOTION,
+    MI_SET_HOUR,
+    MI_SET_MINUTE,
+    MI_SHUTDOWN,
+    MI_NEXT_PAGE,
+    MI_EXIT,
+    MI_ITEM_COUNT
 };
 
 // Resolve a (page, slot) coordinate to a MenuItem id, or 0xFF if out of range.

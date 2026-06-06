@@ -6,10 +6,10 @@
 #include <stdint.h>
 
 enum WakeReason {
-  WAKE_POWER_ON,   // first boot or hard reset
-  WAKE_TIMER,      // scheduled reminder
-  WAKE_BUTTON,     // user pressed A or B
-  WAKE_OTHER
+    WAKE_POWER_ON,   // first boot or hard reset
+    WAKE_TIMER,      // scheduled reminder
+    WAKE_BUTTON,     // user pressed A or B
+    WAKE_OTHER
 };
 
 WakeReason wakeReason();
