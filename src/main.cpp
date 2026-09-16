@@ -213,6 +213,9 @@ void setup() {
             }
         }
         rolloverDailyGlasses();
+        // Remember which occurrence we woke for — the reschedule below must
+        // land strictly past it even if the RTC hasn't ticked over to it yet.
+        uint32_t firedMin = settings().nextReminderMin;
         ReminderResult r = runReminder();
         if (r == REM_ACK) {
             onAckDrank();
@@ -227,7 +230,7 @@ void setup() {
         }
         // REM_DISMISSED: silent — power button means "shut up and let me work".
         timeSyncFinish();   // clock corrected before the schedule is recomputed
-        scheduleNextReminder();           // advance schedule = now + interval
+        scheduleNextReminderAfter(firedMin);   // advance past the alert we just ran
         deepSleepFor(secondsUntilNextReminder());
         return;
     }
@@ -295,6 +298,7 @@ void loop() {
         RTC_TimeTypeDef tm; M5.Rtc.GetTime(&tm);
         if (!inQuietHours(tm.Hours) && rtcWallMinutes() >= settings().nextReminderMin) {
             rolloverDailyGlasses();
+            uint32_t firedMin = settings().nextReminderMin;
             ReminderResult r = runReminder();
             if (r == REM_ACK) {
                 onAckDrank();
@@ -307,7 +311,7 @@ void loop() {
                 uiDrawTimeout(); uiPush();
                 delay(800);
             }
-            scheduleNextReminder();
+            scheduleNextReminderAfter(firedMin);
             lastInteract = millis();   // don't immediately auto-sleep after the alert
             return;                    // restart the loop so the next iteration draws cleanly
         }

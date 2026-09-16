@@ -17,6 +17,12 @@
 static const gpio_num_t PIN_BTN_A   = GPIO_NUM_37;
 static const gpio_num_t PIN_AXP_IRQ = GPIO_NUM_35;
 
+// Sleep a couple of seconds *into* the target minute rather than aiming at its
+// exact start. The deep-sleep timer is the internal RC oscillator, so a clock
+// running slightly fast would otherwise wake us in the minute before the one
+// we scheduled — which reads as "not due yet" to every rtcWallMinutes() check.
+static const uint32_t WAKE_MARGIN_SEC = 3;
+
 WakeReason wakeReason() {
     switch (esp_sleep_get_wakeup_cause()) {
         case ESP_SLEEP_WAKEUP_TIMER:     return WAKE_TIMER;
@@ -84,6 +90,26 @@ void scheduleNextReminder() {
     settingsSave();
 }
 
+void scheduleNextReminderAfter(uint32_t firedMin) {
+    scheduleNextReminder();
+    if (firedMin == 0 || settings().nextReminderMin == 0) return;
+
+    // The deep-sleep timer runs off the ESP32's internal 150 kHz RC oscillator,
+    // which drifts by seconds-to-tens-of-seconds over an hour-long sleep — far
+    // more than WAKE_MARGIN_SEC absorbs — so a fast clock can wake us while the
+    // RTC still reads the minute *before* the one we scheduled.
+    // scheduleNextReminder() only guarantees "after now", so in that window it
+    // hands back the very occurrence we just alerted for and we beep again a
+    // few seconds after the user answered. An NTP correction that moves the
+    // clock backwards lands us in the same window. Step past it.
+    if (settings().nextReminderMin <= firedMin) {
+        uint32_t interval = settings().intervalMin ? settings().intervalMin : 60;
+        uint32_t behind   = firedMin - settings().nextReminderMin;
+        settings().nextReminderMin += (behind / interval + 1) * interval;
+        settingsSave();
+    }
+}
+
 uint32_t minutesUntilNextReminder() {
     if (!rtcIsValid() || settings().nextReminderMin == 0) {
         return settings().intervalMin;
@@ -116,7 +142,8 @@ uint32_t secondsUntilNextReminder() {
         uint32_t now = rtcWallMinutes();
         if (settings().nextReminderMin > now) {
             uint32_t deltaMin = settings().nextReminderMin - now;
-            int32_t total = (int32_t)(deltaMin * 60) - (int32_t)tm.Seconds;
+            int32_t total = (int32_t)(deltaMin * 60) - (int32_t)tm.Seconds
+                          + (int32_t)WAKE_MARGIN_SEC;
             if (total < 5) total = 5;     // floor: don't try to sleep ~0s
             return (uint32_t)total;
         }

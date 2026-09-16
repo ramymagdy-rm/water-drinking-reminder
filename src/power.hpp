@@ -48,6 +48,13 @@ uint32_t minutesUntilNextReminder();
 // interval / RTC. No-op if RTC is invalid (year < 2024).
 void scheduleNextReminder();
 
+// Same, but for the occurrence that just fired: guarantees the new target is
+// strictly *after* `firedMin` (the nextReminderMin we woke up for). Pass the
+// value captured before runReminder(). Plain scheduleNextReminder() only
+// promises "after now", which is not enough when the deep-sleep timer woke us
+// a few seconds early — see the comment in the implementation.
+void scheduleNextReminderAfter(uint32_t firedMin);
+
 // Deep sleep with timer + button wakeup armed. Does not return.
 void deepSleepFor(uint32_t seconds);
 
